@@ -44,6 +44,7 @@ org.xwiki.contrib.confluence.filter.internal.macros.ScrollExporterMacrosConverte
 org.xwiki.contrib.confluence.filter.internal.macros.SpacesMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.SwaggerOpenApiMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.TextParamToContentConverter
+org.xwiki.contrib.confluence.filter.internal.macros.TimeMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.TipMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.TocMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.TranslationMacroConverter
