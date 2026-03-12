@@ -46,6 +46,8 @@
       org.xwiki.filter.input.InputFilterStreamFactory/confluence+xml
       org.xwiki.contrib.confluence.filter.MacroConverter/anchor
       org.xwiki.contrib.confluence.filter.MacroConverter/default
+      org.xwiki.contrib.confluence.filter.MacroConverter/tip
+      org.xwiki.contrib.confluence.filter.MacroConverter/note
     </xwiki.extension.components>
 
     <xwiki.surefire.captureconsole.skip>true</xwiki.surefire.captureconsole.skip>

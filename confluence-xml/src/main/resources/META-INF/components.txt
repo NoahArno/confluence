@@ -33,6 +33,7 @@ org.xwiki.contrib.confluence.filter.internal.macros.MathMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.MarkdownMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.MentionMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.NoformatMacroConverter
+org.xwiki.contrib.confluence.filter.internal.macros.NoteMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.PagetreeMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.PagetreesearchMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.PlantumlRenderMacroConverter
@@ -43,6 +44,7 @@ org.xwiki.contrib.confluence.filter.internal.macros.ScrollExporterMacrosConverte
 org.xwiki.contrib.confluence.filter.internal.macros.SpacesMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.SwaggerOpenApiMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.TextParamToContentConverter
+org.xwiki.contrib.confluence.filter.internal.macros.TipMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.TocMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.TranslationMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.UITextBoxMacroConverter
