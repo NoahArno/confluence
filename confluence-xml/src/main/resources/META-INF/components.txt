@@ -53,6 +53,7 @@ org.xwiki.contrib.confluence.filter.internal.macros.TranslationMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.UITextBoxMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.UIStepMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.UIStepsMacroConverter
+org.xwiki.contrib.confluence.filter.internal.macros.ViewFileMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.WarningMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.WidgetMacroConverter
 org.xwiki.contrib.confluence.filter.url.internal.BaseConfluenceURLConverter

@@ -41,7 +41,7 @@
             </entry>
             <entry>
               <string>content</string>
-              <string>{{view-file att--filename="MySpace.My Page.WebHome@image.pdf" height="250"/}}
+              <string>[[view-file：image.pdf>>attach:MySpace.My Page.WebHome@image.pdf]]
 
 {{viewxls att--filename="f.xls" page="confluencePage:page:MyOtherSpace.MyOtherPage"/}}</string>
             </entry>

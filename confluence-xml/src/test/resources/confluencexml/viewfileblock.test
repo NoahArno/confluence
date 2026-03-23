@@ -43,23 +43,23 @@
               <string>content</string>
               <string>\\
 
-{{view-file att--filename="file.pptx" height="250"/}}
+[[view-file：file.pptx>>attach:file.pptx]]
 
   
 
-{{view-file att--filename="file2.pptx" height="250"/}}
+[[view-file：file2.pptx>>attach:file2.pptx]]
 
   
 
-{{view-file att--filename="file.pdf" height="400"/}}
+[[view-file：file.pdf>>attach:file.pdf]]
 
   
 
-{{view-file att--filename="file.docx" height="400"/}}
+[[view-file：file.docx>>attach:file.docx]]
 
 lassen,  
 
-{{view-file att--filename="situationsdidaktik_de.pdf" height="250"/}}
+[[view-file：situationsdidaktik_de.pdf>>attach:situationsdidaktik_de.pdf]]
 
  
 
@@ -71,7 +71,7 @@ lassen, 
 
 Other file: 
 
-{{view-file att--filename="file2.pdf" height="250"/}}
+[[view-file：file2.pdf>>attach:file2.pdf]]
 
 \\
 
