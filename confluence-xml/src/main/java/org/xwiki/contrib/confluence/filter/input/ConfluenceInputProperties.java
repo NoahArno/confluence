@@ -149,6 +149,11 @@ public class ConfluenceInputProperties extends DefaultFilterStreamProperties
 
     private Set<String> unprefixedMacros;
 
+    /**
+     * @see #isTaskListAsCheckboxListEnabled()
+     */
+    private boolean taskListAsCheckboxListEnabled = true;
+
     private Mapping userIdMapping;
 
     private ConfluenceIdRangeList objectIdRanges;
@@ -751,6 +756,26 @@ public class ConfluenceInputProperties extends DefaultFilterStreamProperties
     public void setUnprefixedMacros(Set<String> unprefixedMacros)
     {
         this.unprefixedMacros = unprefixedMacros;
+    }
+
+    /**
+     * @return true if Confluence task lists should be converted to XWiki checkbox bullet lists
+     * @since 9.96.0
+     */
+    @PropertyName("Task list as checkbox list")
+    @PropertyDescription("Convert Confluence task-list/task macros to XWiki checkbox bullet lists (* [ ] / * [x]).")
+    public boolean isTaskListAsCheckboxListEnabled()
+    {
+        return this.taskListAsCheckboxListEnabled;
+    }
+
+    /**
+     * @param taskListAsCheckboxListEnabled if true, convert Confluence task lists to XWiki checkbox bullet lists
+     * @since 9.96.0
+     */
+    public void setTaskListAsCheckboxListEnabled(boolean taskListAsCheckboxListEnabled)
+    {
+        this.taskListAsCheckboxListEnabled = taskListAsCheckboxListEnabled;
     }
 
     /**

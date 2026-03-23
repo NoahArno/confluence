@@ -23,7 +23,9 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -45,16 +47,21 @@ import org.xwiki.contrib.confluence.parser.xhtml.internal.wikimodel.ConfluenceIn
 import org.xwiki.rendering.listener.CompositeListener;
 import org.xwiki.rendering.listener.Format;
 import org.xwiki.rendering.listener.HeaderLevel;
+import org.xwiki.rendering.listener.InlineFilterListener;
 import org.xwiki.rendering.listener.Listener;
+import org.xwiki.rendering.listener.ListType;
 import org.xwiki.rendering.listener.QueueListener;
 import org.xwiki.rendering.listener.WrappingListener;
 import org.xwiki.rendering.listener.chaining.EventType;
 import org.xwiki.rendering.listener.reference.ResourceReference;
 import org.xwiki.rendering.listener.reference.ResourceType;
 import org.xwiki.rendering.listener.reference.UserResourceReference;
+import org.xwiki.rendering.parser.ParseException;
+import org.xwiki.rendering.parser.Parser;
 import org.xwiki.rendering.renderer.PrintRenderer;
 import org.xwiki.rendering.renderer.printer.DefaultWikiPrinter;
 import org.xwiki.rendering.renderer.printer.WikiPrinter;
+import org.xwiki.rendering.syntax.Syntax;
 
 import static org.xwiki.contrib.confluence.filter.internal.input.ConfluenceConverter.getConfluenceServerAnchor;
 import static org.xwiki.contrib.confluence.filter.internal.input.ConfluenceConverter.spacesToDash;
@@ -79,6 +86,14 @@ public class ConfluenceConverterListener extends WrappingListener
 
     private static final String ID_MACRO_NAME = "id";
     private static final String ID_MACRO_NAME_PARAMETER = "name";
+    private static final String TASK_LIST_MACRO = "task-list";
+    private static final String TASK_MACRO = "task";
+    private static final String TASK_STATUS_PARAMETER = "status";
+    private static final String COMPLETE_STATUS = "complete";
+    private static final String CHECKED_MARKER = "[x]";
+    private static final String UNCHECKED_MARKER = "[ ]";
+    private static final Pattern PLACEHOLDER_INLINE_TASKS_PATTERN =
+        Pattern.compile("(?m)^\\s*\\(%\\s*class=\"placeholder-inline-tasks\"\\s*%\\)\\s*");
 
     @Inject
     private MacroConverter macroConverter;
@@ -174,6 +189,19 @@ public class ConfluenceConverterListener extends WrappingListener
         }
     };
 
+    private static final class TaskMacroData
+    {
+        private final String status;
+
+        private final String content;
+
+        private TaskMacroData(String status, String content)
+        {
+            this.status = status;
+            this.content = content;
+        }
+    }
+
     private void countMacro(String id)
     {
         if (!id.startsWith("CONFLUENCE_xwiki-") && macroIds != null && !isQueuingEvents()) {
@@ -220,7 +248,124 @@ public class ConfluenceConverterListener extends WrappingListener
     @Override
     public void onMacro(String id, Map<String, String> parameters, String content, boolean inline)
     {
+        if (convertTaskListMacroIfNeeded(id, content, inline)) {
+            return;
+        }
         this.macroConverter.toXWiki(id, parameters, content, inline, wrappingListener);
+    }
+
+    private boolean convertTaskListMacroIfNeeded(String id, String content, boolean inline)
+    {
+        if (inline || !TASK_LIST_MACRO.equals(id) || !isTaskListConversionEnabled()) {
+            return false;
+        }
+
+        List<TaskMacroData> tasks = extractTasks(content);
+        if (tasks == null || tasks.isEmpty()) {
+            return false;
+        }
+
+        this.wrappingListener.beginList(ListType.BULLETED, Listener.EMPTY_PARAMETERS);
+        for (TaskMacroData task : tasks) {
+            this.wrappingListener.beginListItem();
+            this.wrappingListener.onWord(
+                COMPLETE_STATUS.equalsIgnoreCase(task.status) ? CHECKED_MARKER : UNCHECKED_MARKER);
+
+            String taskContent = cleanTaskContent(task.content);
+            if (StringUtils.isNotBlank(taskContent)) {
+                this.wrappingListener.onSpace();
+                if (!parseAndTraverseInline(taskContent, this)) {
+                    // Keep the original content if parsing failed.
+                    this.wrappingListener.onRawText(taskContent, Syntax.XWIKI_2_1);
+                }
+            }
+
+            this.wrappingListener.endListItem();
+        }
+        this.wrappingListener.endList(ListType.BULLETED, Listener.EMPTY_PARAMETERS);
+
+        return true;
+    }
+
+    private boolean isTaskListConversionEnabled()
+    {
+        return this.context != null
+            && this.context.getProperties() != null
+            && this.context.getProperties().isTaskListAsCheckboxListEnabled();
+    }
+
+    private List<TaskMacroData> extractTasks(String taskListContent)
+    {
+        QueueListener queue = new QueueListener();
+        if (!parseAndTraverse(StringUtils.defaultString(taskListContent), queue)) {
+            return null;
+        }
+
+        List<TaskMacroData> tasks = new java.util.ArrayList<>();
+        for (QueueListener.Event event : queue) {
+            if (event.eventType != EventType.ON_MACRO) {
+                continue;
+            }
+
+            String macroId = (String) event.eventParameters[0];
+            @SuppressWarnings("unchecked")
+            Map<String, String> macroParameters = (Map<String, String>) event.eventParameters[1];
+            String macroContent = (String) event.eventParameters[2];
+            boolean macroInline = (boolean) event.eventParameters[3];
+
+            if (macroInline || !TASK_MACRO.equals(macroId)) {
+                return null;
+            }
+
+            tasks.add(new TaskMacroData(macroParameters.get(TASK_STATUS_PARAMETER), macroContent));
+        }
+
+        return tasks;
+    }
+
+    private String cleanTaskContent(String taskContent)
+    {
+        String cleaned = StringUtils.defaultString(taskContent);
+        cleaned = PLACEHOLDER_INLINE_TASKS_PATTERN.matcher(cleaned).replaceAll("");
+        cleaned = cleaned.replace('\r', ' ').replace('\n', ' ');
+        return StringUtils.trim(cleaned);
+    }
+
+    private boolean parseAndTraverse(String content, Listener listener)
+    {
+        try {
+            Parser parser = this.componentManager.getInstance(Parser.class, getMacroContentSyntaxId());
+            parser.parse(new java.io.StringReader(content)).getChildren().forEach(child -> child.traverse(listener));
+            return true;
+        } catch (ComponentLookupException | ParseException e) {
+            this.logger.debug("Failed to parse task content for conversion.", e);
+            return false;
+        }
+    }
+
+    private boolean parseAndTraverseInline(String content, Listener listener)
+    {
+        try {
+            Parser parser = this.componentManager.getInstance(Parser.class, getMacroContentSyntaxId());
+            InlineFilterListener inlineFilterListener = new InlineFilterListener();
+            inlineFilterListener.setWrappedListener(listener);
+            parser.parse(new java.io.StringReader(content)).getChildren()
+                .forEach(child -> child.traverse(inlineFilterListener));
+            return true;
+        } catch (ComponentLookupException | ParseException e) {
+            this.logger.debug("Failed to parse task content as inline content for conversion.", e);
+            return false;
+        }
+    }
+
+    private String getMacroContentSyntaxId()
+    {
+        if (this.context == null || this.context.getProperties() == null
+            || this.context.getProperties().getMacroContentSyntax() == null) {
+            return Syntax.XWIKI_2_1.toIdString();
+        }
+
+        return this.context.getProperties().getMacroContentSyntax().toIdString();
     }
 
     @Override

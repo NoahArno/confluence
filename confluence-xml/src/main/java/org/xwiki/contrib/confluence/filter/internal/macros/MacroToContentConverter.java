@@ -23,13 +23,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.apache.commons.lang3.StringUtils;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.confluence.filter.ConversionException;
+import org.xwiki.contrib.confluence.filter.input.ConfluenceInputContext;
+import org.xwiki.rendering.listener.ListType;
 import org.xwiki.rendering.listener.Listener;
+import org.xwiki.rendering.listener.QueueListener;
+import org.xwiki.rendering.listener.chaining.EventType;
 
 /**
  * Converts a macro call to a group, retaining the id, class and content.
@@ -38,15 +44,46 @@ import org.xwiki.rendering.listener.Listener;
  * @since 9.51.1
  */
 @Component(hints = { "ul", "legend", "auihorizontalnav", "auibuttongroup", "auihorizontalnavpage", "tableenhancer",
-    "footnote" })
+    "footnote", "task-list" })
 @Singleton
 public class MacroToContentConverter extends AbstractParseContentMacroConverter
 {
+    private static final String TASK_LIST_MACRO = "task-list";
+
+    private static final String TASK_MACRO = "task";
+
+    private static final String STATUS_PARAMETER = "status";
+
+    private static final String COMPLETE_STATUS = "complete";
+
+    private static final String CHECKED_MARKER = "[x]";
+
+    private static final String UNCHECKED_MARKER = "[ ]";
+
+    private static final Pattern PLACEHOLDER_INLINE_TASKS_PATTERN =
+        Pattern.compile("(?m)^\\s*\\(%\\s*class=\"placeholder-inline-tasks\"\\s*%\\)\\s*");
+
     private static final String DIV_CLASS_FORMAT = "confluence_%s_content";
 
     private static final String HTML_ATTRIBUTE_ID = "id";
 
     private static final String HTML_ATTRIBUTE_CLASS = "class";
+
+    @Inject
+    private ConfluenceInputContext inputContext;
+
+    private static class TaskItem
+    {
+        private final String status;
+
+        private final String content;
+
+        TaskItem(String status, String content)
+        {
+            this.status = status;
+            this.content = content;
+        }
+    }
 
     @Override
     public String toXWikiId(String confluenceId, Map<String, String> confluenceParameters, String confluenceContent,
@@ -59,6 +96,12 @@ public class MacroToContentConverter extends AbstractParseContentMacroConverter
     public void toXWiki(String id, Map<String, String> parameters, boolean inline, String content, Listener listener)
         throws ConversionException
     {
+        if (TASK_LIST_MACRO.equals(id) && isTaskListConversionEnabled()) {
+            if (convertTaskListToCheckboxList(id, content, listener)) {
+                return;
+            }
+        }
+
         Map<String, String> divWrapperParams = toXWikiParameters(id, parameters, content);
         String newContent = toXWikiContent(id, parameters, content);
         beginEvent(id, divWrapperParams, newContent, inline, listener);
@@ -121,5 +164,65 @@ public class MacroToContentConverter extends AbstractParseContentMacroConverter
     public InlineSupport supportsInlineMode(String id, Map<String, String> parameters, String content)
     {
         return InlineSupport.NO;
+    }
+
+    private boolean convertTaskListToCheckboxList(String id, String content, Listener listener)
+    {
+        List<TaskItem> tasks = new ArrayList<>();
+
+        QueueListener taskListQueue = new QueueListener();
+        parseContent(id, taskListQueue, content);
+
+        for (QueueListener.Event event : taskListQueue) {
+            if (event.eventType != EventType.ON_MACRO) {
+                continue;
+            }
+
+            String macroId = (String) event.eventParameters[0];
+            @SuppressWarnings("unchecked")
+            Map<String, String> macroParameters = (Map<String, String>) event.eventParameters[1];
+            String macroContent = (String) event.eventParameters[2];
+            boolean macroInline = (boolean) event.eventParameters[3];
+
+            if (!macroInline && TASK_MACRO.equals(macroId)) {
+                tasks.add(new TaskItem(macroParameters.get(STATUS_PARAMETER), macroContent));
+            } else {
+                return false;
+            }
+        }
+
+        if (tasks.isEmpty()) {
+            return false;
+        }
+
+        listener.beginList(ListType.BULLETED, Listener.EMPTY_PARAMETERS);
+        for (TaskItem task : tasks) {
+            listener.beginListItem();
+            listener.onWord(COMPLETE_STATUS.equalsIgnoreCase(task.status) ? CHECKED_MARKER : UNCHECKED_MARKER);
+
+            String taskContent = cleanTaskContent(task.content);
+            if (StringUtils.isNotBlank(taskContent)) {
+                listener.onSpace();
+                parseContent(TASK_MACRO, listener, taskContent);
+            }
+            listener.endListItem();
+        }
+        listener.endList(ListType.BULLETED, Listener.EMPTY_PARAMETERS);
+
+        return true;
+    }
+
+    private String cleanTaskContent(String taskContent)
+    {
+        String cleanedTaskContent = StringUtils.defaultString(taskContent);
+        cleanedTaskContent = PLACEHOLDER_INLINE_TASKS_PATTERN.matcher(cleanedTaskContent).replaceAll("");
+        return StringUtils.strip(cleanedTaskContent, "\r\n");
+    }
+
+    private boolean isTaskListConversionEnabled()
+    {
+        return this.inputContext != null
+            && this.inputContext.getProperties() != null
+            && this.inputContext.getProperties().isTaskListAsCheckboxListEnabled();
     }
 }
