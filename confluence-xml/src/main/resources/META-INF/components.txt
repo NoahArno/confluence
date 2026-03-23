@@ -22,6 +22,7 @@ org.xwiki.contrib.confluence.filter.internal.macros.ChildrenMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.ClickableMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.ConditionalContentMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.DefaultMacroConverter
+org.xwiki.contrib.confluence.filter.internal.macros.DetailsMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.IncludeMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.ImgMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.LangMacroConverter
