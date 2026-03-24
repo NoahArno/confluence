@@ -92,6 +92,7 @@ public class ConfluenceConverterListener extends WrappingListener
     private static final String COMPLETE_STATUS = "complete";
     private static final String CHECKED_MARKER = "[x]";
     private static final String UNCHECKED_MARKER = "[ ]";
+    private static final String UI_BUTTON_MACRO = "ui-button";
     private static final Pattern PLACEHOLDER_INLINE_TASKS_PATTERN =
         Pattern.compile("(?m)^\\s*\\(%\\s*class=\"placeholder-inline-tasks\"\\s*%\\)\\s*");
 
@@ -136,6 +137,21 @@ public class ConfluenceConverterListener extends WrappingListener
      * the unlikely case of nested paragraphs.
      */
     private final Deque<Listener> previousListenerStack = new ArrayDeque<>();
+
+    /**
+     * A stack of queues used to inspect paragraphs that are immediately after a ui-button macro.
+     */
+    private final Deque<QueueListener> uiButtonParagraphContentListenerStack = new ArrayDeque<>();
+
+    /**
+     * A stack of listeners used with {@link #uiButtonParagraphContentListenerStack} to restore the wrapped listener.
+     */
+    private final Deque<Listener> uiButtonParagraphPreviousListenerStack = new ArrayDeque<>();
+
+    /**
+     * True when the previous macro event was ui-button.
+     */
+    private boolean lastMacroWasUIButton;
 
     private Map<String, Integer> macroIds;
 
@@ -249,8 +265,11 @@ public class ConfluenceConverterListener extends WrappingListener
     public void onMacro(String id, Map<String, String> parameters, String content, boolean inline)
     {
         if (convertTaskListMacroIfNeeded(id, content, inline)) {
+            this.lastMacroWasUIButton = false;
             return;
         }
+
+        this.lastMacroWasUIButton = UI_BUTTON_MACRO.equals(id);
         this.macroConverter.toXWiki(id, parameters, content, inline, wrappingListener);
     }
 
@@ -404,7 +423,13 @@ public class ConfluenceConverterListener extends WrappingListener
             this.queueEvents();
 
             super.beginParagraph(removeClassParameter(parameters));
+        } else if (this.lastMacroWasUIButton) {
+            // Drop spacing-only empty paragraphs (<p><br/></p>) around ui-button macros.
+            this.queueUIButtonParagraphEvents();
+            this.lastMacroWasUIButton = false;
+            super.beginParagraph(parameters);
         } else {
+            this.lastMacroWasUIButton = false;
             super.beginParagraph(parameters);
         }
     }
@@ -430,9 +455,47 @@ public class ConfluenceConverterListener extends WrappingListener
         return !this.contentListenerStack.isEmpty();
     }
 
+    private void queueUIButtonParagraphEvents()
+    {
+        this.uiButtonParagraphContentListenerStack.push(new QueueListener());
+        this.uiButtonParagraphPreviousListenerStack.push(wrappingListener.getWrappedListener());
+        setWrappedListener(this.uiButtonParagraphContentListenerStack.element());
+    }
+
+    private QueueListener dequeueUIButtonParagraphEvents()
+    {
+        Listener previousListener = this.uiButtonParagraphPreviousListenerStack.pop();
+        setWrappedListener(previousListener);
+        return this.uiButtonParagraphContentListenerStack.pop();
+    }
+
+    private boolean isQueuingUIButtonParagraphEvents()
+    {
+        return !this.uiButtonParagraphContentListenerStack.isEmpty();
+    }
+
     @Override
     public void endParagraph(Map<String, String> parameters)
     {
+        if (this.isQueuingUIButtonParagraphEvents()) {
+            QueueListener contentListener = this.dequeueUIButtonParagraphEvents();
+
+            boolean isEmpty = contentListener.stream()
+                // Skip the first event which is the beginning of the paragraph.
+                .skip(1)
+                .allMatch(event -> event.eventType == EventType.ON_NEW_LINE
+                    || event.eventType == EventType.ON_SPACE);
+
+            if (!isEmpty) {
+                contentListener.consumeEvents(this.getWrappedListener());
+                super.endParagraph(parameters);
+            } else {
+                // Keep accepting consecutive spacing-only paragraphs after the same ui-button.
+                this.lastMacroWasUIButton = true;
+            }
+            return;
+        }
+
         // Check if we reached the end of a paragraph with the auto-cursor-target class.
         if (hasAutoCursorTargetClass(parameters) && this.isQueuingEvents()) {
             // Restore the previous listener and get the recorded events.

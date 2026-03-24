@@ -52,6 +52,7 @@ org.xwiki.contrib.confluence.filter.internal.macros.TipMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.TocMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.TranslationMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.UITextBoxMacroConverter
+org.xwiki.contrib.confluence.filter.internal.macros.UIButtonMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.UIExpandMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.UIStepMacroConverter
 org.xwiki.contrib.confluence.filter.internal.macros.UIStepsMacroConverter
