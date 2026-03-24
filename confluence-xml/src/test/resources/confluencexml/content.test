@@ -61,7 +61,7 @@ sub macro rich **text** content
 {{display reference="confluencePage:page:TestSpace.pagetovalidate "/}}Hi.
 
 {{content syntax="markdown/1.2"}}
-## Some {&amp;#123;{&amp;#123;markdown}}}} {&amp;#123;{escaped}}} {&amp;#123;notamacro}} {&amp;#123;/content}} [&amp;#91;[notalink]]][&amp;#91;notalink]][&amp;#91;[&amp;#91;notalink]]]][shouldnotbeescaped] {shouldnotbeescaped}
+## Some {{{{markdown}}}} {{{escaped}}} {{notamacro}} {{/content}} [[[notalink]]] [[notalink]] [[[[notalink]]]] [shouldnotbeescaped] {shouldnotbeescaped}
 ```bash
 $ ls -l
 ```

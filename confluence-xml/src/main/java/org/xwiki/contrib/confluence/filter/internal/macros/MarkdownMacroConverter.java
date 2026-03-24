@@ -38,9 +38,6 @@ import org.xwiki.contrib.confluence.filter.AbstractMacroConverter;
 @Singleton
 public class MarkdownMacroConverter extends AbstractMacroConverter
 {
-    private static final String[] BRACKETS = {"{{", "[["};
-    private static final String[] ESCAPED_BRACKETS = {"{&#123;", "[&#91;"};
-
     @Override
     public String toXWikiId(String confluenceId, Map<String, String> confluenceParameters, String confluenceContent,
         boolean inline)
@@ -64,7 +61,6 @@ public class MarkdownMacroConverter extends AbstractMacroConverter
     @Override
     protected String toXWikiContent(String confluenceId, Map<String, String> parameters, String confluenceContent)
     {
-        // Escape {{ and [[ since they have no meaning in Confluence's markdown but they do have a meaning in our flavor
-        return StringUtils.replaceEach(confluenceContent, BRACKETS, ESCAPED_BRACKETS);
+        return StringUtils.defaultString(confluenceContent);
     }
 }
