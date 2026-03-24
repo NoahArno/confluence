@@ -28,6 +28,8 @@ import javax.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.confluence.filter.AbstractMacroConverter;
+import org.xwiki.contrib.confluence.filter.ConversionException;
+import org.xwiki.rendering.listener.Listener;
 
 /**
  * Convert Confluence ui-expand macro to XWiki expandable macro.
@@ -59,13 +61,22 @@ public class UIExpandMacroConverter extends AbstractMacroConverter
     @Override
     protected String toXWikiContent(String confluenceId, Map<String, String> parameters, String confluenceContent)
     {
-        String content = StringUtils.strip(StringUtils.defaultString(confluenceContent), "\r\n");
-        if (StringUtils.isEmpty(content)) {
-            return "\n";
+        return StringUtils.strip(StringUtils.defaultString(confluenceContent), "\r\n");
+    }
+
+    @Override
+    protected void toXWiki(String confluenceId, Map<String, String> confluenceParameters, boolean inline,
+        String confluenceContent, Listener listener) throws ConversionException
+    {
+        if (!inline) {
+            listener.onNewLine();
         }
 
-        // Keep one extra line break in expandable content.
-        return content + "\n";
+        super.toXWiki(confluenceId, confluenceParameters, inline, confluenceContent, listener);
+
+        if (!inline) {
+            listener.onNewLine();
+        }
     }
 
     @Override

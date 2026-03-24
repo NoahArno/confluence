@@ -44,10 +44,11 @@
               </entry>
               <entry>
                 <string>content</string>
-                <string>{{expandable summary="Expand"}}
+                <string>
+{{expandable summary="Expand"}}
 I am expanded
-
-{{/expandable}}</string>
+{{/expandable}}
+</string>
               </entry>
               <entry>
                 <string>syntax</string>
