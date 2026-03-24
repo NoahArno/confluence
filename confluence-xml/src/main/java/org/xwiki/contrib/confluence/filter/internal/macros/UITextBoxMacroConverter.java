@@ -20,6 +20,7 @@
 package org.xwiki.contrib.confluence.filter.internal.macros;
 
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.inject.Named;
@@ -39,11 +40,41 @@ import org.xwiki.contrib.confluence.filter.AbstractMacroConverter;
 @Named("ui-text-box")
 public class UITextBoxMacroConverter extends AbstractMacroConverter
 {
+    private static final String ICON_PARAMETER = "icon";
+
+    private static final String ICON_NOTE = "note";
+
+    private static final String ICON_DEFAULT = "default";
+
+    private static final String ICON_INFO = "info";
+
+    private static final String ICON_TIP = "tip";
+
+    private static final String ICON_WARNING = "warning";
+
     @Override
     public String toXWikiId(String confluenceId, Map<String, String> confluenceParameters, String confluenceContent,
         boolean inline)
     {
-        return "box";
+        String icon = confluenceParameters.get(ICON_PARAMETER);
+        if (icon == null) {
+            return "box";
+        }
+
+        switch (icon.toLowerCase(Locale.ROOT)) {
+            case ICON_NOTE:
+                return "warning";
+            case ICON_DEFAULT:
+                return "box";
+            case ICON_INFO:
+                return "info";
+            case ICON_TIP:
+                return "success";
+            case ICON_WARNING:
+                return "error";
+            default:
+                return "box";
+        }
     }
 
     @Override
