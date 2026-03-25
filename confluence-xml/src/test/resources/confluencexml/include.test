@@ -54,7 +54,7 @@
 
 {{display reference="confluencePage:page:TestSpace.pagetovalidate"/}}
 
-{{excerpt-include 0="confluencePage:page:TestSpace.pagetovalidate"/}}
+{{excerpt-include reference="confluencePage:page:TestSpace.pagetovalidate"/}}
 
 Include inline: {{display reference="confluencePage:page:TestSpace.pagetovalidate"/}}</string>
               </entry>

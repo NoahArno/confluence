@@ -142,7 +142,7 @@
 
 It includes Under Page A:
 
-{{excerpt-include 0="xwiki:SmallNested.PageA.Under Page A.WebHome"/}}</string>
+{{excerpt-include reference="xwiki:SmallNested.PageA.Under Page A.WebHome"/}}</string>
                 </entry>
                 <entry>
                   <string>syntax</string>

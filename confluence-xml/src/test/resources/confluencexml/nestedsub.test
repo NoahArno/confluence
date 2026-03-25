@@ -408,7 +408,7 @@ It shows Page A:
 
 It includes Under Page A:
 
-{{excerpt-include 0="SmallNested.Page A.Under Page A.WebHome"/}}</string>
+{{excerpt-include reference="SmallNested.Page A.Under Page A.WebHome"/}}</string>
                   </entry>
                   <entry>
                     <string>syntax</string>

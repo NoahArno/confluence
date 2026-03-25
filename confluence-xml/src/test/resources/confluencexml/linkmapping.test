@@ -141,7 +141,7 @@
 
 It includes Under Page A:
 
-{{excerpt-include 0="SmallNested.PageA.Under Page A.WebHome"/}}</string>
+{{excerpt-include reference="SmallNested.PageA.Under Page A.WebHome"/}}</string>
               </entry>
               <entry>
                 <string>syntax</string>
