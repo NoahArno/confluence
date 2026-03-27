@@ -50,6 +50,8 @@ public class MacroToContentConverter extends AbstractParseContentMacroConverter
 {
     private static final String TASK_LIST_MACRO = "task-list";
 
+    private static final String TABLE_ENHANCER_MACRO = "tableenhancer";
+
     private static final String TASK_MACRO = "task";
 
     private static final String STATUS_PARAMETER = "status";
@@ -100,6 +102,12 @@ public class MacroToContentConverter extends AbstractParseContentMacroConverter
             if (convertTaskListToCheckboxList(id, content, listener)) {
                 return;
             }
+        }
+
+        if (TABLE_ENHANCER_MACRO.equals(id)) {
+            // XWiki does not provide this macro out of the box: keep only the body content (table, etc.).
+            parseContent(id, listener, content);
+            return;
         }
 
         Map<String, String> divWrapperParams = toXWikiParameters(id, parameters, content);

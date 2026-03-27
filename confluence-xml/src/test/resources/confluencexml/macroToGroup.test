@@ -118,8 +118,6 @@ Some content?
 
 = {{id name="MySpaceHome-TableEnhancer"/}}TableEnhancer =
 
-(% class="confluence_tableenhancer_content" %)
-(((
 |=(% scope="col" %)(((
 Some title
 )))|=(% scope="col" %)(((
@@ -129,7 +127,6 @@ Some title2
 Some element
 )))|(((
 Some element
-)))
 )))</string>
             </entry>
             <entry>
